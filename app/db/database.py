@@ -3,7 +3,7 @@ from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-from .config import get_settings
+from ..config import get_settings
 
 url_object = URL.create(
     "postgresql+psycopg2",

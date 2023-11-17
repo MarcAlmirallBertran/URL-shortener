@@ -1,16 +1,19 @@
-import uvicorn
 import secrets
+import uvicorn
+import hashlib
 
 import validators
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
-from . import models, schemas
-from .database import get_db_session, engine
+from .db.database import get_db_session, engine
+from .models.url import URL, Base
+from .schemas.url import URLBase, URLInfo
+
 
 app = FastAPI()
-models.Base.metadata.create_all(bind=engine)
+Base.metadata.create_all(bind=engine)
 
 def raise_bad_request(message):
     raise HTTPException(status_code=400, detail=message)
@@ -30,8 +33,8 @@ def forward_to_target_url(
         db: Session = Depends(get_db_session)
     ):
     db_url = (
-        db.query(models.URL)
-        .filter(models.URL.key == url_key, models.URL.is_active)
+        db.query(URL)
+        .filter(URL.key == url_key, URL.is_active)
         .first()
     )
     if db_url:
@@ -39,15 +42,17 @@ def forward_to_target_url(
     else:
         raise_not_found(request)
 
-@app.post("/url", response_model=schemas.URLInfo)
-def create_url(url: schemas.URLBase, db: Session = Depends(get_db_session)):
+@app.post("/url", response_model=URLInfo)
+def create_url(url: URLBase, db: Session = Depends(get_db_session)):
     if not validators.url(url.target_url):
         raise_bad_request(message="Your provided URL is not valid")
 
-    chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    key = "".join(secrets.choice(chars) for _ in range(5))
-    secret_key = "".join(secrets.choice(chars) for _ in range(8))
-    db_url = models.URL(
+    hash_object = hashlib.sha256(url.target_url.encode())
+    hash_hex = hash_object.hexdigest()
+    key = hash_hex[:8]
+    secret_key = hash_hex[:10]
+
+    db_url = URL(
         target_url=url.target_url, key=key, secret_key=secret_key
     )
     db.add(db_url)
