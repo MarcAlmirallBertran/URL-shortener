@@ -1,3 +1,4 @@
+import uvicorn
 import secrets
 
 import validators
@@ -56,3 +57,6 @@ def create_url(url: schemas.URLBase, db: Session = Depends(get_db_session)):
     db_url.admin_url = secret_key
 
     return db_url
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
