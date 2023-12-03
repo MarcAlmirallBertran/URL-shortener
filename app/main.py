@@ -1,4 +1,3 @@
-import secrets
 import uvicorn
 import hashlib
 
@@ -7,13 +6,12 @@ from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
-from .db.database import get_db_session, engine
-from .models.url import URL, Base
+from .db.database import get_db_session
+from .models.url import URL
 from .schemas.url import URLBase, URLInfo
 
 
 app = FastAPI()
-Base.metadata.create_all(bind=engine)
 
 def raise_bad_request(message):
     raise HTTPException(status_code=400, detail=message)

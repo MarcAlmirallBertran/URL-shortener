@@ -1,18 +1,11 @@
-from sqlalchemy import create_engine, URL
+from sqlalchemy import create_engine
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 from ..config import get_settings
 
-url_object = URL.create(
-    "postgresql+psycopg2",
-    username = get_settings().db_user,
-    password = get_settings().db_password,
-    host = get_settings().db_host,
-    port = get_settings().db_port,
-    database = get_settings().db_name,
-)
+url_object = f'postgresql+psycopg2://{get_settings().db_user}:{get_settings().db_password}@{get_settings().db_host}:{get_settings().db_port}/{get_settings().db_name}'
 
 engine = create_engine(
     url_object
