@@ -2,8 +2,9 @@ import uvicorn
 import hashlib
 
 import validators
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
+from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from .db.database import get_db_session
@@ -13,6 +14,8 @@ from .schemas.url import URLBase, URLInfo
 
 app = FastAPI()
 
+templates = Jinja2Templates(directory="app/templates")
+
 def raise_bad_request(message):
     raise HTTPException(status_code=400, detail=message)
 
@@ -21,8 +24,8 @@ def raise_not_found(request):
     raise HTTPException(status_code=404, detail=message)
 
 @app.get("/")
-def read_root():
-    return "Welcome to the URL shortener API :)"
+def read_root(request: Request):
+    return templates.TemplateResponse("main.html", {"request": request})
 
 @app.get("/{url_key}")
 def forward_to_target_url(
@@ -40,7 +43,7 @@ def forward_to_target_url(
     else:
         raise_not_found(request)
 
-@app.post("/url", response_model=URLInfo)
+@app.post("/url", status_code=status.HTTP_201_CREATED, response_model=URLInfo)
 def create_url(url: URLBase, db: Session = Depends(get_db_session)):
     if not validators.url(url.target_url):
         raise_bad_request(message="Your provided URL is not valid")
